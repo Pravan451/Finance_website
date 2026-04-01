@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  html.dark body {
+    @apply bg-[#030712] text-white overflow-x-hidden;
+    font-family: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
+  }
+
+  html:not(.dark) body {
+    @apply bg-slate-50 text-slate-900 overflow-x-hidden;
+    font-family: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
+  }
+
+  /* Smooth theme cross-fade */
+  body {
+    @apply transition-colors duration-500 ease-out;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-2xl border backdrop-blur-sm transition-all duration-300 ease-out;
+  }
+
+  .surface-card--dark {
+    @apply border-gray-800/80 bg-gray-900/85 shadow-xl shadow-black/30;
+    @apply hover:border-indigo-500/35 hover:shadow-glow-sm hover:shadow-indigo-500/5;
+  }
+
+  .surface-card--light {
+    @apply border-slate-200/90 bg-white/90 shadow-lg shadow-slate-200/40;
+    @apply hover:border-indigo-300/60 hover:shadow-xl hover:shadow-indigo-500/10;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 font-medium text-white shadow-lg shadow-indigo-500/25;
+    @apply transition-all duration-300 ease-out;
+    @apply hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/35 hover:shadow-xl;
+    @apply active:scale-[0.98];
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2;
+  }
+
+  html.dark .btn-primary {
+    @apply focus-visible:ring-offset-gray-950;
+  }
+
+  html:not(.dark) .btn-primary {
+    @apply focus-visible:ring-offset-white;
+  }
+
+  .nav-link-item {
+    @apply relative overflow-hidden transition-all duration-300 ease-out;
+  }
+
+  .nav-link-item::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-indigo-600/0 via-indigo-500/10 to-violet-600/0 opacity-0 transition-opacity duration-300;
+  }
+
+  .nav-link-item:hover::before {
+    @apply opacity-100;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-gray-900/50 backdrop-blur-xl border border-gray-800/80 shadow-xl;
+  }
+
+  .text-gradient-brand {
+    @apply bg-gradient-to-r from-indigo-300 via-white to-violet-300 bg-clip-text text-transparent;
+  }
+
+  html:not(.dark) .text-gradient-brand {
+    @apply from-indigo-700 via-slate-800 to-violet-700;
+  }
+}
+
+/* Scrollbars */
+html.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+html:not(.dark) ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+html.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.65;
+  cursor: pointer;
+}
+
+html:not(.dark) input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
