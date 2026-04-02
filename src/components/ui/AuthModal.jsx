@@ -6,7 +6,9 @@ import useFinanceStore from '../../store/useFinanceStore';
 export default function AuthModal({ isOpen, onClose, onSuccess, requiredRole }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
-  const { darkMode } = useFinanceStore();
+  const { darkMode, currentUser } = useFinanceStore();
+  
+  const expectedPin = currentUser?.pin || '1234';
 
   useEffect(() => {
     if (isOpen) {
@@ -17,7 +19,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, requiredRole }) 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (pin === '1234') {
+    if (pin === expectedPin) {
       onSuccess();
       onClose();
     } else {

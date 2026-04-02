@@ -20,7 +20,7 @@ import {
   Cell,
 } from 'recharts';
 import { Plus, TrendingUp, PiggyBank, Receipt, Layers } from 'lucide-react';
-import { motion as Motion } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import {
   balanceTrendSeries,
   balanceTrendSeriesByMonth,
@@ -351,20 +351,29 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentTransactions.map((tx) => (
-                    <tr key={tx.id} className={`border-b last:border-0 ${darkMode ? 'border-gray-800/50 hover:bg-gray-800/30' : 'border-slate-100 hover:bg-slate-50'} transition-colors`}>
-                      <td className={`py-3 ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>{new Date(tx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
-                      <td className={`py-3 font-medium ${darkMode ? 'text-white' : 'text-slate-900'}`}>{tx.title}</td>
-                      <td className="py-3">
-                        <span className={`px-2.5 py-1 rounded-md text-xs font-semibold ${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>
-                          {tx.category}
-                        </span>
-                      </td>
-                      <td className={`py-3 text-right font-bold ${tx.type === 'income' ? 'text-emerald-500' : darkMode ? 'text-white' : 'text-slate-900'}`}>
-                        {tx.type === 'income' ? '+' : '-'} {formatINR(tx.amount)}
-                      </td>
-                    </tr>
-                  ))}
+                  <AnimatePresence>
+                    {recentTransactions.map((tx, idx) => (
+                      <Motion.tr
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0, transition: { delay: Math.min(idx * 0.05, 0.5) } }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        key={tx.id}
+                        className={`border-b last:border-0 ${darkMode ? 'border-gray-800/50 hover:bg-gray-800/30' : 'border-slate-100 hover:bg-slate-50'} transition-colors`}
+                      >
+                        <td className={`py-3 ${darkMode ? 'text-gray-300' : 'text-slate-600'}`}>{new Date(tx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
+                        <td className={`py-3 font-medium ${darkMode ? 'text-white' : 'text-slate-900'}`}>{tx.title}</td>
+                        <td className="py-3">
+                          <span className={`px-2.5 py-1 rounded-md text-xs font-semibold ${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-slate-100 text-slate-600'}`}>
+                            {tx.category}
+                          </span>
+                        </td>
+                        <td className={`py-3 text-right font-bold ${tx.type === 'income' ? 'text-emerald-500' : darkMode ? 'text-white' : 'text-slate-900'}`}>
+                          {tx.type === 'income' ? '+' : '-'} {formatINR(tx.amount)}
+                        </td>
+                      </Motion.tr>
+                    ))}
+                  </AnimatePresence>
                 </tbody>
               </table>
             </div>

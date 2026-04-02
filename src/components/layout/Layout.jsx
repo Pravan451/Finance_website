@@ -10,7 +10,7 @@ export default function Layout() {
 
   return (
     <div
-      className={`relative flex min-h-screen min-w-0 ${
+      className={`relative flex h-screen min-w-0 overflow-hidden ${
         darkMode ? "bg-[#030712] text-white" : "bg-slate-50 text-slate-900"
       }`}
     >
@@ -34,9 +34,9 @@ export default function Layout() {
         <Navbar />
         <Motion.main
           key={location.pathname}
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, y: 15, filter: 'blur(6px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className={`flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8 ${darkMode ? "" : "bg-white/40"}`}
         >
           <Outlet />

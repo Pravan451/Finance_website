@@ -1,8 +1,79 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import useFinanceStore from '../store/useFinanceStore';
 import { exportToCSV, exportToJSON, formatINR, uniqueCategories } from '../utils/helpers';
 import EditTransactionModal from '../components/ui/EditTransactionModal';
-import { Download, Search, Trash2, ArrowUpDown, Pencil, FileJson } from 'lucide-react';
+import { Download, Search, Trash2, ArrowUpDown, Pencil, FileJson, ChevronDown } from 'lucide-react';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
+
+function CustomSelect({ value, onChange, options, darkMode }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef();
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const selectedOption = options.find((o) => o.value === value) || options[0];
+
+  return (
+    <div className="relative min-w-[160px]" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex w-full items-center justify-between rounded-xl border px-4 py-2.5 outline-none transition-all duration-300 focus:ring-2 focus:ring-indigo-500 ${
+          darkMode
+            ? 'border-gray-700/80 bg-gray-900/80 text-white hover:border-indigo-500/50'
+            : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-400'
+        }`}
+      >
+        <span className="truncate text-sm">{selectedOption.label}</span>
+        <ChevronDown className={`ml-2 h-4 w-4 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <Motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className={`absolute left-0 mt-2 z-30 w-full overflow-hidden rounded-xl border py-1 shadow-2xl ${
+              darkMode ? 'border-gray-800 bg-gray-900 shadow-black/50' : 'border-slate-200 bg-white shadow-slate-300/50'
+            }`}
+          >
+            <div className="max-h-60 overflow-y-auto custom-scrollbar">
+              {options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+                    value === option.value
+                      ? darkMode
+                        ? 'bg-indigo-500/10 text-indigo-400 font-medium'
+                        : 'bg-indigo-50 text-indigo-600 font-medium'
+                      : darkMode
+                      ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                      : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                  onClick={() => {
+                    onChange(option.value);
+                    setIsOpen(false);
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </Motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function Transactions() {
   const { transactions, deleteTransaction, darkMode, role } = useFinanceStore();
@@ -51,32 +122,34 @@ export default function Transactions() {
           <p className={darkMode ? 'text-gray-400' : 'text-slate-600'}>Search, filter, export, and manage entries</p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => exportToCSV(filteredData, 'finflow_transactions.csv')}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 ${
-              darkMode
-                ? 'border-gray-700/80 bg-gray-800/90 text-white hover:border-indigo-500/40 hover:shadow-glow-sm'
-                : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-400 hover:shadow-md'
-            }`}
-          >
-            <Download className="h-4 w-4" />
-            CSV
-          </button>
-          <button
-            type="button"
-            onClick={() => exportToJSON(filteredData, 'finflow_transactions.json')}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 ${
-              darkMode
-                ? 'border-gray-700/80 bg-gray-800/90 text-white hover:border-indigo-500/40 hover:shadow-glow-sm'
-                : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-400 hover:shadow-md'
-            }`}
-          >
-            <FileJson className="h-4 w-4" />
-            JSON
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => exportToCSV(filteredData, 'finflow_transactions.csv')}
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 ${
+                darkMode
+                  ? 'border-gray-700/80 bg-gray-800/90 text-white hover:border-indigo-500/40 hover:shadow-glow-sm'
+                  : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-400 hover:shadow-md'
+              }`}
+            >
+              <Download className="h-4 w-4" />
+              CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => exportToJSON(filteredData, 'finflow_transactions.json')}
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-all duration-300 hover:-translate-y-0.5 ${
+                darkMode
+                  ? 'border-gray-700/80 bg-gray-800/90 text-white hover:border-indigo-500/40 hover:shadow-glow-sm'
+                  : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-400 hover:shadow-md'
+              }`}
+            >
+              <FileJson className="h-4 w-4" />
+              JSON
+            </button>
+          </div>
+        )}
       </div>
 
       <div className={`rounded-2xl p-4 sm:p-6 ${panel}`}>
@@ -92,28 +165,26 @@ export default function Transactions() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className={`rounded-xl border px-4 py-2.5 outline-none transition-all duration-300 focus:ring-2 focus:ring-indigo-500 ${inputCls}`}
-          >
-            <option value="all">All categories</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+            onChange={setCategoryFilter}
+            darkMode={darkMode}
+            options={[
+              { value: 'all', label: 'All categories' },
+              ...categories.map((c) => ({ value: c, label: c })),
+            ]}
+          />
 
-          <select
+          <CustomSelect
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className={`rounded-xl border px-4 py-2.5 outline-none transition-all duration-300 focus:ring-2 focus:ring-indigo-500 ${inputCls}`}
-          >
-            <option value="all">All types</option>
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
-          </select>
+            onChange={setFilterType}
+            darkMode={darkMode}
+            options={[
+              { value: 'all', label: 'All types' },
+              { value: 'income', label: 'Income' },
+              { value: 'expense', label: 'Expense' },
+            ]}
+          />
 
           <button
             type="button"
@@ -142,13 +213,18 @@ export default function Transactions() {
               </tr>
             </thead>
             <tbody className={`divide-y ${darkMode ? 'divide-gray-800 bg-gray-900' : 'divide-gray-200 bg-white'}`}>
-              {filteredData.length > 0 ? (
-                filteredData.map((t) => (
-                  <tr
-                    key={t.id}
-                    className={`transition-colors duration-200 ${
-                      darkMode ? 'hover:bg-indigo-500/[0.06]' : 'hover:bg-indigo-50/80'
-                    }`}
+              <AnimatePresence>
+                {filteredData.length > 0 ? (
+                  filteredData.map((t, idx) => (
+                    <Motion.tr
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0, transition: { delay: Math.min(idx * 0.04, 0.4) } }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      key={t.id}
+                      className={`transition-colors duration-200 ${
+                        darkMode ? 'hover:bg-indigo-500/[0.06]' : 'hover:bg-indigo-50/80'
+                      }`}
                   >
                     <td className="whitespace-nowrap px-4 py-3 sm:px-6">{new Date(t.date).toLocaleDateString('en-IN')}</td>
                     <td className={`px-4 py-3 font-medium sm:px-6 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{getTitle(t)}</td>
@@ -200,15 +276,20 @@ export default function Transactions() {
                         <span className={darkMode ? 'text-gray-600' : 'text-gray-400'}>—</span>
                       )}
                     </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className={`px-6 py-10 text-center ${darkMode ? 'text-gray-500' : 'text-gray-600'}`}>
-                    No transactions match your filters.
-                  </td>
-                </tr>
-              )}
+                  </Motion.tr>
+                  ))
+                ) : (
+                  <Motion.tr
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <td colSpan={6} className={`px-6 py-10 text-center ${darkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                      No transactions match your filters.
+                    </td>
+                  </Motion.tr>
+                )}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>

@@ -4,10 +4,11 @@ import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X } from 'lucide-react';
 
 export default function ToastContainer() {
-  const { transactions } = useFinanceStore();
+  const { transactions, emis, lastEmiAlertDate, setLastEmiAlertDate } = useFinanceStore();
   const [toasts, setToasts] = useState([]);
   const prevLenRef = useRef(null);
 
+  // High spending alert
   useEffect(() => {
     if (prevLenRef.current === null) {
       prevLenRef.current = transactions.length;
@@ -35,6 +36,38 @@ export default function ToastContainer() {
       });
     }
   }, [transactions]);
+
+  // EMI Alert
+  useEffect(() => {
+    if (!emis || emis.length === 0) return;
+
+    const todayDate = new Date();
+    const todayStr = todayDate.toISOString().split('T')[0];
+    
+    if (lastEmiAlertDate === todayStr) return; // already alerted today
+
+    const tomorrow = new Date(todayDate);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDay = tomorrow.getDate();
+
+    const upcomingEmis = emis.filter(emi => emi.paymentDay === tomorrowDay && emi.monthsPaid < emi.totalMonths);
+
+    if (upcomingEmis.length > 0) {
+      upcomingEmis.forEach(emi => {
+        const newToast = {
+          id: Date.now() + Math.random(),
+          message: `Reminder: EMI "${emi.name}" (₹${emi.monthlyAmount}) is due tomorrow! Maintain your balance.`,
+          type: 'warning',
+        };
+        setToasts((prev) => [...prev, newToast]);
+        setTimeout(() => {
+          setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
+        }, 10000);
+      });
+
+      setLastEmiAlertDate(todayStr); // Guard against multiple alerts today
+    }
+  }, [emis, lastEmiAlertDate, setLastEmiAlertDate]);
 
   const removeToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
 

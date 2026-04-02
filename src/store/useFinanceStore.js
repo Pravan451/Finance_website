@@ -16,18 +16,48 @@ const defaultCategoryBudgets = {
 
 const useFinanceStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       transactions: mockData,
       role: "admin",
       isAuthenticated: false,
+      registeredUsers: [
+        { username: "Admin", email: "admin@finflow.io", password: "password123", pin: "1234" }
+      ],
+      currentUser: null,
       darkMode: true,
       sidebarCollapsed: false,
       mobileNavOpen: false,
       categoryBudgets: { ...defaultCategoryBudgets },
+      emis: [],
+      lastEmiAlertDate: null,
 
       setRole: (role) => set({ role }),
-      login: () => set({ isAuthenticated: true }),
-      logout: () => set({ isAuthenticated: false }),
+      
+      login: (email, password) => {
+        const user = get().registeredUsers.find(
+          (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+        );
+        if (user) {
+          set({ isAuthenticated: true, currentUser: { username: user.username, email: user.email, pin: user.pin } });
+          return true;
+        }
+        return false;
+      },
+      
+      registerUser: (username, email, password, pin) => {
+        const exists = get().registeredUsers.find(
+          (u) => u.email.toLowerCase() === email.toLowerCase()
+        );
+        if (exists) return false;
+        
+        const newUser = { username, email, password, pin };
+        set((state) => ({
+          registeredUsers: [...state.registeredUsers, newUser]
+        }));
+        return true;
+      },
+      
+      logout: () => set({ isAuthenticated: false, currentUser: null }),
 
       toggleDarkMode: () =>
         set((state) => ({ darkMode: !state.darkMode })),
@@ -37,32 +67,72 @@ const useFinanceStore = create(
 
       setMobileNavOpen: (open) => set({ mobileNavOpen: open }),
 
-      setCategoryBudgets: (budgets) => set({ categoryBudgets: { ...budgets } }),
+      setCategoryBudgets: (budgets) => {
+        if (get().role !== 'admin') return;
+        set({ categoryBudgets: { ...budgets } });
+      },
 
-      addTransaction: (tx) =>
+      addTransaction: (tx) => {
+        if (get().role !== 'admin') return;
         set((state) => ({
           transactions: [...state.transactions, tx],
-        })),
+        }));
+      },
 
-      updateTransaction: (id, updates) =>
+      updateTransaction: (id, updates) => {
+        if (get().role !== 'admin') return;
         set((state) => ({
           transactions: state.transactions.map((t) =>
             String(t.id) === String(id) ? { ...t, ...updates } : t
           ),
-        })),
+        }));
+      },
 
-      deleteTransaction: (id) =>
+      deleteTransaction: (id) => {
+        if (get().role !== 'admin') return;
         set((state) => ({
           transactions: state.transactions.filter((t) => String(t.id) !== String(id)),
-        })),
+        }));
+      },
 
-      resetData: () =>
+      resetData: () => {
+        if (get().role !== 'admin') return;
         set({
           transactions: mockData,
           categoryBudgets: { ...defaultCategoryBudgets },
-        }),
+          emis: [],
+          lastEmiAlertDate: null,
+        });
+      },
 
       addToast: () => {},
+
+      addEmi: (emi) => {
+        if (get().role !== 'admin') return;
+        set((state) => ({
+          emis: [...state.emis, emi],
+        }));
+      },
+
+      deleteEmi: (id) => {
+        if (get().role !== 'admin') return;
+        set((state) => ({
+          emis: state.emis.filter((e) => String(e.id) !== String(id)),
+        }));
+      },
+
+      recordEmiPayment: (id) => {
+        if (get().role !== 'admin') return;
+        set((state) => ({
+          emis: state.emis.map((e) =>
+            String(e.id) === String(id)
+              ? { ...e, monthsPaid: Math.min(e.monthsPaid + 1, e.totalMonths) }
+              : e
+          ),
+        }));
+      },
+
+      setLastEmiAlertDate: (dateString) => set({ lastEmiAlertDate: dateString }),
     }),
     {
       name: "finance-storage",
@@ -70,9 +140,13 @@ const useFinanceStore = create(
         transactions: state.transactions,
         role: state.role,
         isAuthenticated: state.isAuthenticated,
+        registeredUsers: state.registeredUsers,
+        currentUser: state.currentUser,
         darkMode: state.darkMode,
         sidebarCollapsed: state.sidebarCollapsed,
         categoryBudgets: state.categoryBudgets,
+        emis: state.emis,
+        lastEmiAlertDate: state.lastEmiAlertDate,
       }),
     }
   )

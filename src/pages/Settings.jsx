@@ -1,10 +1,21 @@
+import { useState } from 'react';
 import useFinanceStore from "../store/useFinanceStore";
 import { exportToCSV, exportToJSON } from "../utils/helpers";
 import { UserCircle, Shield, Download, Sun, Moon, Database, FileJson } from 'lucide-react';
 import { motion as Motion } from 'framer-motion';
+import AuthModal from "../components/ui/AuthModal";
 
 export default function Settings() {
   const { role, setRole, darkMode, toggleDarkMode, resetData, transactions } = useFinanceStore();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [pendingRole, setPendingRole] = useState(null);
+
+  const handleRoleChange = (newRole) => {
+    if (role !== newRole) {
+      setPendingRole(newRole);
+      setIsAuthOpen(true);
+    }
+  };
 
   const shell = darkMode
     ? 'surface-card surface-card--dark overflow-hidden rounded-2xl'
@@ -44,7 +55,7 @@ export default function Settings() {
               type="button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setRole('admin')}
+              onClick={() => handleRoleChange('admin')}
               className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all duration-300 ${
                 role === 'admin' ? roleActive : roleIdle
               }`}
@@ -56,7 +67,7 @@ export default function Settings() {
               type="button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setRole('viewer')}
+              onClick={() => handleRoleChange('viewer')}
               className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all duration-300 ${
                 role === 'viewer' ? roleActive : roleIdle
               }`}
@@ -94,53 +105,62 @@ export default function Settings() {
           </Motion.button>
         </div>
 
-        <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <Database className="h-5 w-5 text-rose-400" />
-            <div>
-              <h2 className={`text-lg font-semibold ${heading}`}>Data</h2>
-              <p className={`text-sm ${textMuted}`}>Export or reset to bundled sample data</p>
+        {role === 'admin' && (
+          <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <Database className="h-5 w-5 text-rose-400" />
+              <div>
+                <h2 className={`text-lg font-semibold ${heading}`}>Data</h2>
+                <p className={`text-sm ${textMuted}`}>Export or reset to bundled sample data</p>
+              </div>
+            </div>
+            <div className="flex w-full flex-wrap gap-3 sm:w-auto">
+              <Motion.button
+                type="button"
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => exportToCSV(transactions, 'finflow_export.csv')}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all duration-300 sm:flex-none ${
+                  darkMode
+                    ? 'border-gray-700 bg-gray-800/80 text-white hover:border-indigo-500/40 hover:bg-gray-800'
+                    : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-400 hover:shadow-md'
+                }`}
+              >
+                <Download className="h-4 w-4" /> CSV
+              </Motion.button>
+              <Motion.button
+                type="button"
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => exportToJSON(transactions, 'finflow_export.json')}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all duration-300 sm:flex-none ${
+                  darkMode
+                    ? 'border-gray-700 bg-gray-800/80 text-white hover:border-indigo-500/40 hover:bg-gray-800'
+                    : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-400 hover:shadow-md'
+                }`}
+              >
+                <FileJson className="h-4 w-4" /> JSON
+              </Motion.button>
+              <Motion.button
+                type="button"
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={resetData}
+                className="flex flex-1 items-center justify-center rounded-xl border border-rose-500/50 bg-rose-500/15 px-4 py-2.5 text-sm font-medium text-rose-500 transition-all duration-300 hover:bg-rose-500 hover:text-white sm:flex-none"
+              >
+                Reset data
+              </Motion.button>
             </div>
           </div>
-          <div className="flex w-full flex-wrap gap-3 sm:w-auto">
-            <Motion.button
-              type="button"
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => exportToCSV(transactions, 'finflow_export.csv')}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all duration-300 sm:flex-none ${
-                darkMode
-                  ? 'border-gray-700 bg-gray-800/80 text-white hover:border-indigo-500/40 hover:bg-gray-800'
-                  : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-400 hover:shadow-md'
-              }`}
-            >
-              <Download className="h-4 w-4" /> CSV
-            </Motion.button>
-            <Motion.button
-              type="button"
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => exportToJSON(transactions, 'finflow_export.json')}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all duration-300 sm:flex-none ${
-                darkMode
-                  ? 'border-gray-700 bg-gray-800/80 text-white hover:border-indigo-500/40 hover:bg-gray-800'
-                  : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-400 hover:shadow-md'
-              }`}
-            >
-              <FileJson className="h-4 w-4" /> JSON
-            </Motion.button>
-            <Motion.button
-              type="button"
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={resetData}
-              className="flex flex-1 items-center justify-center rounded-xl border border-rose-500/50 bg-rose-500/15 px-4 py-2.5 text-sm font-medium text-rose-500 transition-all duration-300 hover:bg-rose-500 hover:text-white sm:flex-none"
-            >
-              Reset data
-            </Motion.button>
-          </div>
-        </div>
+        )}
       </Motion.div>
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onSuccess={() => setRole(pendingRole)}
+        requiredRole={pendingRole}
+      />
     </div>
   );
 }

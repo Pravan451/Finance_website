@@ -8,6 +8,8 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeft,
+  CreditCard,
+  LogOut,
 } from "lucide-react";
 
 const links = [
@@ -15,11 +17,15 @@ const links = [
   { path: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { path: "/insights", label: "Insights", icon: Lightbulb },
   { path: "/budget", label: "Budget", icon: Wallet },
+  { path: "/emis", label: "EMIs", icon: CreditCard },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function Sidebar() {
-  const { darkMode, sidebarCollapsed, toggleSidebar, setMobileNavOpen } = useFinanceStore();
+  const { darkMode, sidebarCollapsed, toggleSidebar, setMobileNavOpen, role, logout, currentUser } = useFinanceStore();
+
+  const displayUsername = currentUser?.username || (role === 'admin' ? "Admin User" : "Guest Viewer");
+  const displayEmail = currentUser?.email || (role === 'admin' ? "admin@finflow.io" : "guest@finflow.io");
 
   return (
     <aside
@@ -87,24 +93,64 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className={`border-t p-2 ${darkMode ? "border-gray-800/80" : "border-slate-200/80"}`}>
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm transition-all duration-300 ${
-            darkMode
-              ? "text-gray-500 hover:bg-gray-800/80 hover:text-white"
-              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-          }`}
-          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {sidebarCollapsed ? (
-            <PanelLeft className="h-5 w-5 transition-transform duration-300 hover:scale-110" />
-          ) : (
-            <PanelLeftClose className="h-5 w-5 transition-transform duration-300 hover:scale-110" />
-          )}
-          {!sidebarCollapsed && <span>Collapse</span>}
-        </button>
+      <div className={`mt-auto border-t p-3 ${darkMode ? "border-gray-800/80" : "border-slate-200/80"}`}>
+        {!sidebarCollapsed ? (
+          <div className={`flex flex-col gap-2 rounded-xl p-3 shadow-sm border ${darkMode ? "bg-gray-900/50 border-gray-800/80" : "bg-slate-50 border-slate-200/60"}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col overflow-hidden mr-2">
+                <span className={`truncate text-sm font-semibold tracking-tight ${darkMode ? "text-gray-200" : "text-slate-800"}`}>
+                  {displayUsername}
+                </span>
+                <span className={`truncate text-xs ${darkMode ? "text-gray-500" : "text-slate-500"}`}>
+                  {displayEmail}
+                </span>
+              </div>
+              <button 
+                type="button"
+                onClick={logout}
+                className="shrink-0 rounded-lg p-2 text-rose-500 transition-colors hover:bg-rose-500/10"
+                title="Log out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+            <button
+               type="button"
+               onClick={toggleSidebar}
+               className={`mt-1 flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium transition-all ${
+                 darkMode
+                   ? "text-gray-400 hover:bg-gray-800 hover:text-white"
+                   : "text-slate-500 hover:bg-slate-200 hover:text-slate-900"
+               }`}
+             >
+               <PanelLeftClose className="h-3.5 w-3.5" />
+               Collapse
+             </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 ${
+                 darkMode
+                   ? "text-gray-400 hover:bg-gray-800 hover:text-white"
+                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+              title="Expand sidebar"
+            >
+              <PanelLeft className="h-5 w-5" />
+            </button>
+            <button 
+              type="button"
+              onClick={logout}
+              className="rounded-xl flex items-center justify-center h-10 w-10 text-rose-500 transition-colors hover:bg-rose-500/10"
+              title="Log out"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

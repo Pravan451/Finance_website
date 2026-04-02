@@ -5,6 +5,7 @@ import Transactions from './pages/Transactions';
 import Insights from './pages/Insights';
 import Budget from './pages/Budget';
 import Settings from './pages/Settings';
+import Emi from './pages/Emi';
 import Login from './pages/Login';
 import ToastContainer from './components/ui/ToastContainer';
 import useFinanceStore from './store/useFinanceStore';
@@ -39,6 +40,7 @@ export default function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="transactions" element={<Transactions />} />
+              <Route path="emis" element={<Emi />} />
               <Route path="insights" element={<Insights />} />
               <Route path="budget" element={<Budget />} />
               <Route path="settings" element={<Settings />} />
