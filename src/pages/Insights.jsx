@@ -5,7 +5,7 @@ import { Send, Bot, User, Sparkles, TrendingDown, Calendar, PieChart } from 'luc
 import { formatINR, monthlyTotalsByMonth, expensesByCategory } from '../utils/helpers';
 
 export default function Insights() {
-  const { transactions, darkMode } = useFinanceStore();
+  const { transactions, darkMode, categoryBudgets, emis } = useFinanceStore();
 
   const metrics = useMemo(() => {
     const income = transactions.filter((t) => t.type === 'income').reduce((a, b) => a + b.amount, 0);
@@ -36,32 +36,49 @@ export default function Insights() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const generateAIResponse = () => {
+  const generateAIResponse = (userQuery) => {
+    const q = userQuery.toLowerCase();
     const expenses = transactions.filter((t) => t.type === 'expense');
     const income = transactions.filter((t) => t.type === 'income').reduce((a, b) => a + b.amount, 0);
     const totalExpenses = expenses.reduce((a, b) => a + b.amount, 0);
+    
+    const recent = [...transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 3);
+    const recentStr = recent.map(t => `${t.title} (${formatINR(t.amount)})`).join(', ');
+
+    const activeEmis = emis.filter(e => e.monthsPaid < e.totalMonths);
+    const emiTotal = activeEmis.reduce((acc, curr) => acc + curr.monthlyAmount, 0);
+
     const categoryMap = {};
     expenses.forEach((t) => (categoryMap[t.category] = (categoryMap[t.category] || 0) + t.amount));
-    const highestCat = Object.entries(categoryMap).sort((a, b) => b[1] - a[1])[0];
-    const byMonth = monthlyTotalsByMonth(transactions);
-    const lastTwo = byMonth.slice(-2);
+    
+    if (q.includes('budget') || q.includes('limit')) {
+      const overBudgetCount = Object.entries(categoryMap).filter(([cat, amt]) => amt > (categoryBudgets[cat] || 0)).length;
+      return `Your total monthly budget across all categories is **${formatINR(Object.values(categoryBudgets).reduce((a,b)=>a+b, 0))}**. You are currently over-budget in **${overBudgetCount} categories**.`;
+    }
 
-    const responses = [
-      highestCat
-        ? `Your **highest spending category** is **${highestCat[0]}** at **${formatINR(highestCat[1])}**.`
-        : 'Add some **expense** transactions to see category insights.',
-      `Totals: income **${formatINR(income)}**, expenses **${formatINR(totalExpenses)}**.`,
-      lastTwo.length >= 2
-        ? `**Month-over-month** change in expenses (last two months in data): about **${Math.round(
-            ((lastTwo[1].expense - lastTwo[0].expense) / (lastTwo[0].expense || 1)) * 100
-          )}%**.`
-        : 'Add transactions across **multiple months** for monthly comparison.',
-      income > 0
-        ? `You are retaining roughly **${Math.round(((income - totalExpenses) / income) * 100)}%** of income after expenses.`
-        : 'Try adding **income** rows to compute savings rate.',
-    ];
+    if (q.includes('emi') || q.includes('loan') || q.includes('debt') || q.includes('upcoming')) {
+      return activeEmis.length > 0
+        ? `You have **${activeEmis.length} active EMIs** totaling **${formatINR(emiTotal)} per month**. Don't forget to track their payments!`
+        : `Great news! You have **0 active EMIs** right now, which means you're debt-free in the tracker.`;
+    }
 
-    return responses[Math.floor(Math.random() * responses.length)];
+    if (q.includes('recent') || q.includes('transaction')) {
+      return recent.length > 0
+        ? `Your most recent transactions are: **${recentStr}**. Total spending so far is **${formatINR(totalExpenses)}**.`
+        : `You don't have any recent transactions logged yet.`;
+    }
+
+    if (q.includes('income') || q.includes('earning') || q.includes('save') || q.includes('saving')) {
+      return `Your total tracked income is **${formatINR(income)}**. With expenses at **${formatINR(totalExpenses)}**, your current net savings stand at **${formatINR(income - totalExpenses)}**.`;
+    }
+    
+    if (q.includes('spend') || q.includes('expense')) {
+      const highestCat = Object.entries(categoryMap).sort((a, b) => b[1] - a[1])[0];
+      return `Your total expenses are **${formatINR(totalExpenses)}**. ${highestCat ? `Most of this is going towards **${highestCat[0]}** (${formatINR(highestCat[1])}).` : ''}`;
+    }
+
+    // Default comprehensive catch-all state
+    return `Looking at all your data: You have **${formatINR(income)}** in income, **${formatINR(totalExpenses)}** in expenses, and **${activeEmis.length} active EMIs** (${formatINR(emiTotal)}/mo). Your most recent logged transaction was **${recent[0]?.title || 'none'}**.`;
   };
 
   const handleSend = (e) => {
@@ -72,7 +89,7 @@ export default function Insights() {
     setInput('');
     setIsTyping(true);
     setTimeout(() => {
-      const aiResponseContent = generateAIResponse();
+      const aiResponseContent = generateAIResponse(input);
       setMessages((prev) => [...prev, { role: 'assistant', content: aiResponseContent }]);
       setIsTyping(false);
     }, 900 + Math.random() * 1000);

@@ -80,15 +80,23 @@ export default function EmiCard({ emi, onPay }) {
           </div>
         </div>
 
-        <div className="flex-1 pl-6 space-y-3">
+        <div className="flex-1 pl-6 grid grid-cols-2 gap-y-3 gap-x-2">
+          <div className="col-span-2">
+            <p className={`text-xs ${textMuted} mb-1`}>Total Due</p>
+            <p className={`font-semibold ${textTitle}`}>
+              {isCompleted ? 'No due amount' : `₹${Math.max(0, remainingAmount).toLocaleString()}`}
+            </p>
+          </div>
           <div>
-            <p className={`text-xs ${textMuted} mb-1`}>Remaining Balance</p>
-            <p className={`font-semibold ${textTitle}`}>₹{Math.max(0, remainingAmount).toLocaleString()}</p>
+            <p className={`text-xs ${textMuted} mb-1`}>Monthly Due</p>
+            <p className={`font-semibold ${textTitle}`}>
+               {isCompleted ? '₹0' : `₹${emi.monthlyAmount.toLocaleString()}`}
+            </p>
           </div>
           <div>
             <p className={`text-xs ${textMuted} mb-1`}>Months Left</p>
             <p className={`font-medium ${textTitle}`}>
-               {remainingMonths <= 0 ? 'Completed 🎉' : `${remainingMonths} months`}
+               {remainingMonths <= 0 ? 'Done 🎉' : remainingMonths}
             </p>
           </div>
         </div>

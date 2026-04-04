@@ -98,11 +98,16 @@ const useFinanceStore = create(
       resetData: () => {
         if (get().role !== 'admin') return;
         set({
-          transactions: mockData,
+          transactions: [],
           categoryBudgets: { ...defaultCategoryBudgets },
           emis: [],
           lastEmiAlertDate: null,
         });
+      },
+
+      loadDemoData: () => {
+        if (get().role !== 'admin') return;
+        set({ transactions: mockData });
       },
 
       addToast: () => {},
@@ -123,13 +128,27 @@ const useFinanceStore = create(
 
       recordEmiPayment: (id) => {
         if (get().role !== 'admin') return;
+        let paidEmi = null;
         set((state) => ({
-          emis: state.emis.map((e) =>
-            String(e.id) === String(id)
-              ? { ...e, monthsPaid: Math.min(e.monthsPaid + 1, e.totalMonths) }
-              : e
-          ),
+          emis: state.emis.map((e) => {
+            if (String(e.id) === String(id) && e.monthsPaid < e.totalMonths) {
+              paidEmi = e;
+              return { ...e, monthsPaid: e.monthsPaid + 1 };
+            }
+            return e;
+          }),
         }));
+
+        if (paidEmi) {
+          get().addTransaction({
+            id: Date.now().toString(),
+            title: `EMI: ${paidEmi.name}`,
+            amount: paidEmi.monthlyAmount,
+            type: 'expense',
+            category: 'Bills',
+            date: new Date().toISOString().split('T')[0]
+          });
+        }
       },
 
       setLastEmiAlertDate: (dateString) => set({ lastEmiAlertDate: dateString }),

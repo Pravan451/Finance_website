@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import useFinanceStore from "../store/useFinanceStore";
 import { exportToCSV, exportToJSON } from "../utils/helpers";
-import { UserCircle, Shield, Download, Sun, Moon, Database, FileJson } from 'lucide-react';
-import { motion as Motion } from 'framer-motion';
+import { UserCircle, Shield, Download, Sun, Moon, Database, FileJson, AlertTriangle } from 'lucide-react';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import AuthModal from "../components/ui/AuthModal";
 
 export default function Settings() {
   const { role, setRole, darkMode, toggleDarkMode, resetData, transactions } = useFinanceStore();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isResetOpen, setIsResetOpen] = useState(false);
   const [pendingRole, setPendingRole] = useState(null);
 
   const handleRoleChange = (newRole) => {
@@ -145,7 +146,7 @@ export default function Settings() {
                 type="button"
                 whileHover={{ y: -1 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={resetData}
+                onClick={() => setIsResetOpen(true)}
                 className="flex flex-1 items-center justify-center rounded-xl border border-rose-500/50 bg-rose-500/15 px-4 py-2.5 text-sm font-medium text-rose-500 transition-all duration-300 hover:bg-rose-500 hover:text-white sm:flex-none"
               >
                 Reset data
@@ -161,6 +162,61 @@ export default function Settings() {
         onSuccess={() => setRole(pendingRole)}
         requiredRole={pendingRole}
       />
+
+      <AnimatePresence>
+        {isResetOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <Motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsResetOpen(false)}
+              className="absolute inset-0 bg-transparent backdrop-blur-md"
+            />
+            <Motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className={`relative rounded-2xl border p-6 w-full max-w-sm shadow-2xl overflow-visible ${
+                darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'
+              }`}
+            >
+              <div className="mb-4 flex items-center justify-center p-4">
+                <div className="rounded-full bg-rose-500/10 p-5">
+                  <AlertTriangle className="h-8 w-8 text-rose-500" />
+                </div>
+              </div>
+              <h2 className={`mb-2 text-center text-xl font-bold ${heading}`}>Reset All Data?</h2>
+              <p className={`mb-6 text-center text-sm ${textMuted}`}>
+                Are you sure you want to wipe your data? This deletes all your logged transactions and EMIs constantly. <strong>This cannot be reversed.</strong>
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsResetOpen(false)}
+                  className={`flex-1 rounded-xl border px-4 py-2.5 font-medium transition-colors ${
+                    darkMode
+                      ? 'border-gray-700 hover:bg-gray-800 text-gray-300'
+                      : 'border-slate-300 hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetData();
+                    setIsResetOpen(false);
+                  }}
+                  className="flex-1 rounded-xl border border-rose-500 bg-rose-500 px-4 py-2.5 font-medium text-white shadow-lg shadow-rose-500/25 transition-colors hover:bg-rose-600"
+                >
+                  Yes, Reset
+                </button>
+              </div>
+            </Motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
